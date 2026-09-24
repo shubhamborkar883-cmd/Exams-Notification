@@ -1,0 +1,42 @@
+name: Daily Maharashtra Exams Tracker
+
+on:
+  schedule:
+    # Runs automatically at 06:00 AM IST daily (00:30 UTC)
+    - cron: '30 0 * * *'
+  workflow_dispatch: # Allows you to force run the tool manually with a single click
+
+jobs:
+  build-and-scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Allows GitHub Action to save files back to your repository
+
+    steps:
+    - name: Checkout Code Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Python Environment
+      uses: actions/actions-setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install Scraping Dependences
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Web Scraper Engine
+      run: python scraper.py
+
+    - name: Commit and Push New Exam Alerts
+      run: |
+        git config --global user.name "GitHub Action Exam Bot"
+        git config --global user.email "action@github.com"
+        git add LIVE_EXAM_ALERTS.md
+        if ! git diff --cached --quiet; then
+          git commit -m "🤖 System Alert: Updated Maharashtra Exam Boards [Skip CI]"
+          git push
+        else
+          echo "No new updates to commit today."
+        fi
